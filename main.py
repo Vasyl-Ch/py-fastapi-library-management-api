@@ -1,4 +1,4 @@
-from typing import Generator
+from typing import Generator, Optional
 
 from fastapi import (
     FastAPI,
@@ -8,6 +8,9 @@ from fastapi import (
 from sqlalchemy.orm import Session
 
 from database import SessionLocal
+import models
+from database import engine
+
 from schemas import (
     Author,
     AuthorCreate,
@@ -15,6 +18,8 @@ from schemas import (
     BookCreate
 )
 import crud
+
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
@@ -61,19 +66,12 @@ def create_author(
 
 @app.get("/books/", response_model=list[Book])
 def read_books(
+        author_id: Optional[int] = None,
         skip: int = 0,
         limit: int = 10,
         db: Session = Depends(get_db)
 ):
-    return crud.get_all_books(db, skip=skip, limit=limit)
-
-
-@app.get("/books/{author_id}", response_model=list[Book])
-def read_books_by_author_id(
-        author_id: int,
-        db: Session = Depends(get_db)
-):
-    return crud.get_all_books(db, author_id=author_id)
+    return crud.get_all_books(db, author_id=author_id, skip=skip, limit=limit)
 
 
 @app.post("/books/", response_model=Book)
