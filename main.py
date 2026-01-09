@@ -47,7 +47,12 @@ def read_author_by_author_id(
         author_id: int,
         db: Session = Depends(get_db)
 ):
-    return crud.get_author_by_id(db, author_id=author_id)
+    db_author = crud.get_author_by_id(db, author_id=author_id)
+
+    if db_author is None:
+        raise HTTPException(status_code=404, detail="Author not found")
+
+    return db_author
 
 
 @app.post("/authors/", response_model=Author)
@@ -80,6 +85,13 @@ def create_book(
         author_id: int,
         db: Session = Depends(get_db)
 ):
+    db_author = crud.get_author_by_id(db, author_id=author_id)
+    if not db_author:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Author with id {author_id} not found"
+        )
+
     if crud.get_book_by_title(db, book_title=book.title):
         raise HTTPException(
             status_code=400,
